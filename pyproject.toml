@@ -1,0 +1,23 @@
+[project]
+name = "gym"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "EnyMan", email = "Mous.imp@gmail.com"},
+]
+dependencies = [
+    "streamlit>=1.36.0",
+    "streamlit-js>=1.0.8",
+    "streamlit-local-storage>=0.0.23",
+    "dataclasses-json>=0.6.7",
+    "streamlit-datalist>=0.0.5",
+    "watchdog>=4.0.1",
+    "matplotlib>=3.9.1",
+]
+requires-python = "==3.11.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
