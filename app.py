@@ -32,9 +32,7 @@ def load_data():
         print("No data to load")
         return
     print("Loading data")
-    st.session_state["recomended_weight_multiplier"] = local_app_data[
-        "recomended_weight_multiplier"
-    ]
+    st.session_state["recomended_weight_multiplier"] = local_app_data["recomended_weight_multiplier"]
     st.session_state["app_data"] = AppState.from_dict(local_app_data["data"])
 
 
@@ -96,9 +94,7 @@ st.sidebar.download_button(
     "Download data",
     json.dumps(
         {
-            "recomended_weight_multiplier": st.session_state[
-                "recomended_weight_multiplier"
-            ],
+            "recomended_weight_multiplier": st.session_state["recomended_weight_multiplier"],
             "data": st.session_state["app_data"].to_dict(),
         }
     ),
@@ -142,9 +138,7 @@ with tab1:
                     max_value=200.0,
                     step=0.5,
                     key=f"max_weight_{exercise_name}",
-                    on_change=lambda: _update_exercise(
-                        exercise_name, st.session_state[f"max_weight_{exercise_name}"]
-                    ),
+                    on_change=lambda: _update_exercise(exercise_name, st.session_state[f"max_weight_{exercise_name}"]),
                 )
         if len(exercise.workouts) > 0:
             col1, col2, col3 = st.columns(3)
