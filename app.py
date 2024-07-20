@@ -18,9 +18,7 @@ def save_data():
     st_ls.set(
         "app_data",
         {
-            "recomended_weight_multiplier": st.session_state[
-                "recomended_weight_multiplier"
-            ],
+            "recomended_weight_multiplier": st.session_state["recomended_weight_multiplier"],
             "data": st.session_state["app_data"].to_dict(),
         },
     )
@@ -32,6 +30,7 @@ def load_data():
         print("No data to load")
         return
     print("Loading data")
+    st.write(local_app_data)
     st.session_state["recomended_weight_multiplier"] = local_app_data["recomended_weight_multiplier"]
     st.session_state["app_data"] = AppState.from_dict(local_app_data["data"])
 
@@ -74,6 +73,7 @@ def prepare_bar_data(exercise):
 
 st_ls.get("app_data")
 
+st.write(st_ls.get("app_data"))
 
 st.sidebar.title("Gym Helper")
 
