@@ -22,7 +22,6 @@ def save_data():
             "data": st.session_state["app_data"].to_dict(),
         },
     )
-    st.write(st_ls.get("app_data"))
 
 
 def load_data():
@@ -31,7 +30,7 @@ def load_data():
         print("No data to load")
         return
     print("Loading data")
-    st.write(local_app_data)
+    # st.write(local_app_data)
     st.session_state["recomended_weight_multiplier"] = local_app_data["recomended_weight_multiplier"]
     st.session_state["app_data"] = AppState.from_dict(local_app_data["data"])
 
