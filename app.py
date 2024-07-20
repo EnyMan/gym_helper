@@ -105,6 +105,7 @@ with tab1:
         with exercise_add_column:
             if st.button("Add Workout", key=f"add_workout_{exercise_name}"):
                 exercise.record_workout(Workout())
+                st.rerun()
         # if st.button("Record Workout", key=f"record_workout_{exercise_name}"):
         # record_workout(exercise)
         # st.write(f"Exercise: {exercise}, max weight: {exercise.max_weight}")
@@ -128,6 +129,7 @@ with tab1:
                 )
                 if st.button("Submit", key=f"submit_workout_{exercise_name}"):
                     exercise.workouts[-1].add_set(weight, reps)
+                    st.rerun()
 
 with tab2:
     for exercise_name, exercise in st.session_state["app_data"].exercises.items():
