@@ -27,13 +27,15 @@ class StLocalStorage:
         # Hide the JS iframes
         self._container = st.container()
         with self._container:
-            st.html(""" 
+            st.html(
+                """ 
                 <style>
                     .element-container:has(iframe[height="0"]) {
                         display: none;
                     }
                 </style>
-            """)
+            """
+            )
 
     def __getitem__(self, key: str) -> Any:
         if key not in st.session_state["_ls_unique_keys"]:
@@ -79,6 +81,7 @@ class StLocalStorage:
             self.__setitem__(key, value)
         except:
             return None
+
 
 # st_local_storage = StLocalStorage()
 # if __name__ == "__main__":
