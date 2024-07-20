@@ -2,6 +2,7 @@ import streamlit as st
 from app_state import AppState, Workout
 import numpy as np
 from local_storage import StLocalStorage
+import json
 
 st_ls = StLocalStorage()
 
@@ -9,18 +10,28 @@ st_ls = StLocalStorage()
 if "app_data" not in st.session_state:
     st.session_state["app_data"] = AppState()
 
+if "recomended_weight_multiplier" not in st.session_state:
+    st.session_state["recomended_weight_multiplier"] = 55
+
 
 def save_data():
-    st_ls.set("app_data", st.session_state["app_data"].to_dict())
+    st_ls.set("app_data", {"recomended_weight_multiplier": st.session_state["recomended_weight_multiplier"], "data": st.session_state["app_data"].to_dict()})
 
 
 def load_data():
     local_app_data = st_ls.get("app_data")
-    st.session_state["app_data"] = AppState.from_dict(local_app_data)
+    if local_app_data is None:
+        print("No data to load")
+        return
+    print("Loading data")
+    st.session_state["recomended_weight_multiplier"] = local_app_data["recomended_weight_multiplier"]
+    st.session_state["app_data"] = AppState.from_dict(local_app_data["data"])
 
 
 def get_last_workout_metrics(workout: Workout):
     sets = len(workout.sets)
+    if len(workout.sets) == 0:
+        return 0, 0.0, 0.0
     weight = np.mean([set_.weight for set_ in workout.sets])
     reps = np.mean([set_.reps for set_ in workout.sets])
 
@@ -52,14 +63,27 @@ def prepare_bar_data(exercise):
             )
     return bar_data
 
+st_ls.get("app_data")
+
 
 st.sidebar.title("Gym Helper")
 
+st.sidebar.markdown("Some text to explain all the stuff")
+
+st.sidebar.markdown("## Settings")
+
+st.session_state["recomended_weight_multiplier"] = st.sidebar.slider("1RM Percentage", 30, 85, st.session_state["recomended_weight_multiplier"], 1)
+
+st.sidebar.markdown("## Save/Load data")
 sidebar_columns = st.sidebar.columns(2)
 sidebar_columns[0].button("Save", use_container_width=True, on_click=save_data)
 sidebar_columns[1].button("Load", use_container_width=True, on_click=load_data)
 
+st.sidebar.download_button("Download data", json.dumps({"recomended_weight_multiplier": st.session_state["recomended_weight_multiplier"], "data": st.session_state["app_data"].to_dict()}), "gymerr.json")
+
 st.title("Gym Helper")
+
+# st.write(st.session_state)
 
 tab1, tab2 = st.tabs(["🗃 Data", "📈 Chart"])
 
@@ -78,7 +102,7 @@ with tab1:
 
     for exercise_name, exercise in st.session_state["app_data"].exercises.items():
         st.header(f"{exercise_name} - {len(exercise.workouts)} workouts")
-        st.text(f"Recomended weight: {round(exercise.max_weight*0.55)}")
+        st.text(f"Recomended weight: {round(exercise.max_weight * st.session_state['recomended_weight_multiplier'] / 100)}")
         if len(exercise.workouts) > 0:
             col1, col2, col3 = st.columns(3)
             last_sets, last_mean_weight, last_mean_reps = get_last_workout_metrics(
@@ -113,10 +137,10 @@ with tab1:
             with st.popover("Record Set", disabled=len(exercise.workouts) == 0):
                 weight = st.number_input(
                     "Weight",
-                    value=0.0,
+                    value=float(round(exercise.max_weight * st.session_state['recomended_weight_multiplier'] / 100)),
                     min_value=0.0,
                     max_value=200.0,
-                    step=0.5,
+                    step=1.0,
                     key=f"weight_{exercise_name}",
                 )
                 reps = st.number_input(

@@ -9,7 +9,7 @@ import streamlit as st
 
 # Requires `pip install streamlit-js`
 # https://github.com/toolittlecakes/streamlit_js
-from streamlit_js import st_js
+from streamlit_js import st_js, st_js_blocking
 
 KEY_PREFIX = "st_localstorage_"
 
