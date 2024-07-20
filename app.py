@@ -22,6 +22,7 @@ def save_data():
             "data": st.session_state["app_data"].to_dict(),
         },
     )
+    st.write(st_ls.get("app_data"))
 
 
 def load_data():
