@@ -51,10 +51,12 @@ def get_last_workout_metrics(workout: Workout):
 
 
 def prepare_scatter_data(exercise):
-    scatter_data = []
-    for workout in exercise.workouts:
+    scatter_data = {"weight": [], "reps": [], "workout": []}
+    for workout_index, workout in enumerate(exercise.workouts):
         for set in workout.sets:
-            scatter_data.append({"weight": set.weight, "reps": set.reps})
+            scatter_data["weight"].append(set.weight)
+            scatter_data["reps"].append(set.reps)
+            scatter_data["workout"].append(workout_index + 1)
     return scatter_data
 
 
@@ -71,9 +73,62 @@ def prepare_bar_data(exercise):
     return bar_data
 
 
+def exercise_expander_content():
+    header_column1, header_column2 = st.columns(2, vertical_alignment="bottom")
+    with header_column1:
+        st.text(f"Recomended weight: {round(exercise.max_weight * st.session_state['recomended_weight_multiplier'] / 100)} kg")
+    with header_column2:
+        with st.popover("Exercise Settings"):
+            st.number_input(
+                "Max Weight",
+                value=exercise.max_weight,
+                min_value=0.0,
+                max_value=200.0,
+                step=0.5,
+                key=f"max_weight_{exercise_name}",
+                on_change=lambda: _update_exercise(exercise_name, st.session_state[f"max_weight_{exercise_name}"]),
+            )
+    if len(exercise.workouts) > 0:
+        last_sets, last_mean_weight, last_mean_reps = get_last_workout_metrics(exercise.workouts[-1])
+        previous_sets, previous_mean_weight, previous_mean_reps = (
+            get_last_workout_metrics(exercise.workouts[-2])
+            if len(exercise.workouts) > 1
+            else (0, 0, 0)
+        )
+        last_total_weight = last_sets * last_mean_weight * last_mean_reps
+        previous_total_weight = previous_sets * previous_mean_weight * previous_mean_reps
+        st.metric("Last Total Weight", f"{last_total_weight:.1f} kg", delta=f"{last_total_weight - previous_total_weight:.1f} kg")
+    exercise_add_column, exercise_set_column, _ = st.columns([1, 1, 3])
+    with exercise_add_column:
+        if st.button("Add Workout", key=f"add_workout_{exercise_name}"):
+            exercise.record_workout(Workout())
+            save_data()
+    with exercise_set_column:
+        with st.popover("Record Set", disabled=len(exercise.workouts) == 0):
+            weight = st.number_input(
+                "Weight",
+                value=float(round(exercise.max_weight * st.session_state["recomended_weight_multiplier"] / 100)),
+                min_value=0.0,
+                max_value=200.0,
+                step=1.0,
+                key=f"weight_{exercise_name}",
+            )
+            reps = st.number_input(
+                "Reps",
+                value=0,
+                min_value=0,
+                max_value=100,
+                step=1,
+                key=f"reps_{exercise_name}",
+            )
+            if st.button("Submit", key=f"submit_workout_{exercise_name}"):
+                exercise.workouts[-1].add_set(weight, reps)
+                save_data()
+
 st_ls.get("app_data")
 
-st.write(st_ls.get("app_data"))
+if len(st.session_state["app_data"].exercises) == 0:
+    load_data()
 
 st.sidebar.title("Gym Helper")
 
@@ -104,7 +159,7 @@ st.sidebar.download_button(
 st.title("Gym Helper")
 
 
-tab1, tab2 = st.tabs(["🗃 Data", "📈 Chart"])
+tab1, tab2, tab3 = st.tabs(["🏋 Data", "📈 Chart", "📕 Info"])
 
 
 def _update_exercise(exercise_name, max_weight):
@@ -114,90 +169,31 @@ def _update_exercise(exercise_name, max_weight):
 with tab1:
     st.header("Add new Exercise")
 
-    with st.popover("Add/Update Exercise"):
+    with st.popover("Add Exercise"):
         exercise = st.text_input("Name of the Exercise")
-        max_weight = st.number_input(
-            "Max Weight", value=0.0, min_value=0.0, max_value=200.0, step=0.5
-        )
+        max_weight = st.number_input("Max Weight", value=0.0, min_value=0.0, max_value=200.0, step=0.5)
         if st.button("Submit", key="submit_exercise"):
             st.session_state["app_data"].add_exercises(exercise, max_weight)
+            save_data()
 
     for exercise_name, exercise in st.session_state["app_data"].exercises.items():
-        header_column1, header_column2 = st.columns(2, vertical_alignment="bottom")
-        with header_column1:
-            st.header(f"{exercise_name} - {len(exercise.workouts)} workouts")
-            st.text(
-                f"Recomended weight: {round(exercise.max_weight * st.session_state['recomended_weight_multiplier'] / 100)}"
-            )
-        with header_column2:
-            with st.popover("Exercise Settings"):
-                st.number_input(
-                    "Max Weight",
-                    value=exercise.max_weight,
-                    min_value=0.0,
-                    max_value=200.0,
-                    step=0.5,
-                    key=f"max_weight_{exercise_name}",
-                    on_change=lambda: _update_exercise(exercise_name, st.session_state[f"max_weight_{exercise_name}"]),
-                )
-        if len(exercise.workouts) > 0:
-            col1, col2, col3 = st.columns(3)
-            last_sets, last_mean_weight, last_mean_reps = get_last_workout_metrics(
-                exercise.workouts[-1]
-            )
-            previous_sets, previous_mean_weight, previous_mean_reps = (
-                get_last_workout_metrics(exercise.workouts[-2])
-                if len(exercise.workouts) > 1
-                else (0, 0, 0)
-            )
-            col1.metric("Sets", last_sets, delta=last_sets - previous_sets)
-            col2.metric(
-                "Average Weight",
-                last_mean_weight,
-                delta=last_mean_weight - previous_mean_weight,
-            )
-            col3.metric(
-                "Average Reps",
-                last_mean_reps,
-                delta=last_mean_reps - previous_mean_reps,
-            )
-        exercise_add_column, exercise_set_column, _ = st.columns([1, 1, 3])
-        with exercise_add_column:
-            if st.button("Add Workout", key=f"add_workout_{exercise_name}"):
-                exercise.record_workout(Workout())
-                st.rerun()
-        with exercise_set_column:
-            with st.popover("Record Set", disabled=len(exercise.workouts) == 0):
-                weight = st.number_input(
-                    "Weight",
-                    value=float(
-                        round(
-                            exercise.max_weight
-                            * st.session_state["recomended_weight_multiplier"]
-                            / 100
-                        )
-                    ),
-                    min_value=0.0,
-                    max_value=200.0,
-                    step=1.0,
-                    key=f"weight_{exercise_name}",
-                )
-                reps = st.number_input(
-                    "Reps",
-                    value=0,
-                    min_value=0,
-                    max_value=100,
-                    step=1,
-                    key=f"reps_{exercise_name}",
-                )
-                if st.button("Submit", key=f"submit_workout_{exercise_name}"):
-                    exercise.workouts[-1].add_set(weight, reps)
-                    st.rerun()
+        with st.expander(f"**{exercise_name}** - {len(exercise.workouts)} workouts", expanded=False):
+            exercise_expander_content()
 
 with tab2:
     for exercise_name, exercise in st.session_state["app_data"].exercises.items():
         st.header(exercise_name)
-        st.scatter_chart(
-            prepare_scatter_data(exercise), x_label="Reps", y_label="Weight"
-        )
+        st.scatter_chart(prepare_scatter_data(exercise), x="reps", y="weight", color="workout", x_label="Reps", y_label="Weight")
         st.bar_chart(prepare_bar_data(exercise), x_label="Workout", y_label="Reps")
+
+with tab3:
+    st.markdown("""
+    ## Rozcvička
+    1. 5-10 minut cardio
+    2. jedna serie na "prázdno"
+    3. 2-3 (podle váhy) mezi váhy o 5 opakování
+    4. 2-3 opakování 10% více něž cílená vaha
+    5. 
+	    a. U nového cvičení které se zaměřuje na podobnou svalovou skupinu tak udělat jen 50% cilené váhy +/- 5x a pak 2-3 opakování te vahy co budeš dělat
+	    b. U nového cvičení které dělá novou svalou skupinu tak začni u 2.
+    """)
