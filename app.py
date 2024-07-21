@@ -83,8 +83,8 @@ def exercise_expander_content():
                 "Max Weight",
                 value=exercise.max_weight,
                 min_value=0.0,
-                max_value=200.0,
-                step=0.5,
+                max_value=300.0,
+                step=1.0,
                 key=f"max_weight_{exercise_name}",
                 on_change=lambda: _update_exercise(exercise_name, st.session_state[f"max_weight_{exercise_name}"]),
             )
@@ -109,7 +109,7 @@ def exercise_expander_content():
                 "Weight",
                 value=float(round(exercise.max_weight * st.session_state["recomended_weight_multiplier"] / 100)),
                 min_value=0.0,
-                max_value=200.0,
+                max_value=300.0,
                 step=1.0,
                 key=f"weight_{exercise_name}",
             )
@@ -171,7 +171,7 @@ with tab1:
 
     with st.popover("Add Exercise"):
         exercise = st.text_input("Name of the Exercise")
-        max_weight = st.number_input("Max Weight", value=0.0, min_value=0.0, max_value=200.0, step=0.5)
+        max_weight = st.number_input("Max Weight", value=0.0, min_value=0.0, max_value=300.0, step=1.0)
         if st.button("Submit", key="submit_exercise"):
             st.session_state["app_data"].add_exercises(exercise, max_weight)
             save_data()
