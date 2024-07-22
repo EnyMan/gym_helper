@@ -184,7 +184,7 @@ with tab1:
             save_data()
 
     for exercise_name, exercise in st.session_state["app_data"].exercises.items():
-        with st.expander(f"**{exercise_name}** - {len(exercise.workouts)} workouts", expanded=False):
+        with st.expander(f"$\huge {exercise_name}$ - {len(exercise.workouts)} workouts", expanded=False):
             exercise_expander_content()
 
 with tab2:
