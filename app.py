@@ -3,8 +3,7 @@ from app_state import AppState, Workout
 import numpy as np
 from local_storage import StLocalStorage
 import json
-from functools import reduce
-from operator import add
+from streamlit_pills import pills
 
 st_ls = StLocalStorage()
 
@@ -32,9 +31,7 @@ def load_data(overwrite_text):
     else:
         local_app_data = st_ls.get("app_data")
         if local_app_data is None:
-            print("No data to load")
-            return
-    print("Loading data")
+            st.stop()
     # st.write(local_app_data)
     st.session_state["recomended_weight_multiplier"] = local_app_data["recomended_weight_multiplier"]
     st.session_state["app_data"] = AppState.from_dict(local_app_data["data"])
@@ -78,7 +75,8 @@ def prepare_bar_data(exercise):
     return bar_data
 
 
-def exercise_expander_content():
+def exercise_expander_content(exercise_name):
+    exercise = st.session_state["app_data"].exercises[exercise_name]
     header_column1, header_column2 = st.columns(2, vertical_alignment="bottom")
     with header_column1:
         st.text(f"Recomended weight: {round(exercise.max_weight * st.session_state['recomended_weight_multiplier'] / 100)} kg")
@@ -129,13 +127,18 @@ def exercise_expander_content():
             if st.button("Submit", key=f"submit_workout_{exercise_name}"):
                 exercise.workouts[-1].add_set(weight, reps)
                 save_data()
+     
+def reset_buttons(ignore_key: str):
+    for state_key in st.session_state:
+        if state_key.startswith("state_butt_") and state_key != ignore_key:
+            st.session_state[state_key] = False
 
 
 if len(st.session_state["app_data"].exercises) == 0:
     local_data_overwrite = st_ls.get("app_data")
-    load_data_text = st.text(local_data_overwrite)
+    if local_data_overwrite is None:
+        st.stop()
     load_data(local_data_overwrite)
-    load_data_text.empty()
 
 st.sidebar.title("Gym Helper")
 
@@ -143,7 +146,7 @@ st.sidebar.markdown("Some text to explain all the stuff")
 
 st.sidebar.markdown("## Settings")
 
-st.session_state["recomended_weight_multiplier"] = st.sidebar.slider(
+st.session_state["recomended_weight_multiplier"] = st.sidebar.number_input(
     "1RM Percentage", 30, 85, st.session_state["recomended_weight_multiplier"], 1
 )
 
@@ -163,15 +166,12 @@ st.sidebar.download_button(
     "gymerr.json",
 )
 
-st.title("Gym Helper")
-
 
 tab1, tab2, tab3 = st.tabs(["🏋 Data", "📈 Chart", "📕 Info"])
 
 
 def _update_exercise(exercise_name, max_weight):
     st.session_state["app_data"].exercises[exercise_name].max_weight = max_weight
-
 
 with tab1:
     st.header("Add new Exercise")
@@ -182,17 +182,20 @@ with tab1:
         if st.button("Submit", key="submit_exercise"):
             st.session_state["app_data"].add_exercises(exercise, max_weight)
             save_data()
-
-    for exercise_name, exercise in st.session_state["app_data"].exercises.items():
-        with st.expander(f"$\huge {exercise_name}$ - {len(exercise.workouts)} workouts", expanded=False):
-            exercise_expander_content()
-
-with tab2:
-    for exercise_name, exercise in st.session_state["app_data"].exercises.items():
-        st.header(exercise_name)
+    
+    selected_exercise_name = pills("test", options=list(st.session_state["app_data"].exercises.keys()), label_visibility="hidden") # exercise_name for exercise_name in st.session_state["app_data"].exercises
+    
+    if selected_exercise_name:
+        exercise = st.session_state["app_data"].exercises[selected_exercise_name]
+        exercise_expander_content(selected_exercise_name)
         st.scatter_chart(prepare_scatter_data(exercise), x="reps", y="weight", color="workout", x_label="Reps", y_label="Weight")
         st.bar_chart(prepare_bar_data(exercise), x_label="Workout", y_label="Reps")
 
+    # st.write(selected)
+
+
+with tab2:
+    st.write("WIP")
 with tab3:
     st.markdown("""
     ## Rozcvička

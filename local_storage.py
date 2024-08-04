@@ -9,7 +9,7 @@ import streamlit as st
 
 # Requires `pip install streamlit-js`
 # https://github.com/toolittlecakes/streamlit_js
-from streamlit_js import st_js, st_js_blocking
+from streamlit_js import st_js
 
 KEY_PREFIX = "st_localstorage_"
 
@@ -26,16 +26,16 @@ class StLocalStorage:
 
         # Hide the JS iframes
         self._container = st.container()
-        with self._container:
-            st.html(
-                """ 
-                <style>
-                    .element-container:has(iframe[height="0"]) {
-                        display: none;
-                    }
-                </style>
-            """
-            )
+        # with self._container:
+            # st.html(
+            #     """ 
+            #     <style>
+            #         .element-container:has(iframe[height="0"]) {
+            #             display: none;
+            #         }
+            #     </style>
+            # """
+            # )
 
     def __getitem__(self, key: str) -> Any:
         if key not in st.session_state["_ls_unique_keys"]:
@@ -81,22 +81,3 @@ class StLocalStorage:
             self.__setitem__(key, value)
         except:
             return None
-
-
-# st_local_storage = StLocalStorage()
-# if __name__ == "__main__":
-#     st.title("st_local_storage basic example")
-#
-#     "Any values you save will be available after leaving / refreshing the tab"
-#
-#     key = st.text_input("Key")
-#     value = st.text_input("Value")
-#     if st.button("Save"):
-#         st_local_storage[key] = value
-#
-#     if st.button("Delete"):
-#         del st_local_storage[key]
-#
-#     if key:
-#         f"Current value of {key} is:"
-#         st.write(st_local_storage[key])
